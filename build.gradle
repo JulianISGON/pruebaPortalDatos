@@ -1,0 +1,118 @@
+plugins {
+    id 'java'
+    id 'net.serenity-bdd.serenity-gradle-plugin' version '4.0.1'
+}
+
+group 'enlace'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    serenityVersion = '4.0.1'
+    cucumberVersion = '7.14.0'
+    slf4jVersion = '2.0.9'
+    logbackVersion = '1.4.11'
+}
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+dependencies {
+    // Serenity BDD con Screenplay
+    testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-screenplay:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-screenplay-webdriver:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-cucumber:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
+
+    // Cucumber
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-junit:${cucumberVersion}"
+
+    // JUnit 4 (requerido para Cucumber runner)
+    testImplementation 'junit:junit:4.13.2'
+
+    // Selenium
+    testImplementation 'org.seleniumhq.selenium:selenium-java:4.25.0'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.6.2'
+
+    // Logging
+    testImplementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    testImplementation "ch.qos.logback:logback-classic:${logbackVersion}"
+
+    // Utilities
+    testImplementation 'com.google.code.gson:gson:2.10.1'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+}
+
+test {
+    useJUnit()
+    include '**/*TestSuite.class'
+    testLogging {
+        showStandardStreams = true
+        events "passed", "skipped", "failed"
+        exceptionFormat = 'short'
+    }
+    systemProperties = System.properties as Map<String, ?>
+    systemProperty "cucumber.publish.enabled", "false"
+    systemProperty "logback.statusListenerClass", "ch.qos.logback.core.status.NopStatusListener"
+
+    // Evitar fallo del build si hay tests que fallan (para ver el reporte)
+    ignoreFailures = true
+}
+
+gradle.startParameter.continueOnFailure = true
+
+// Deshabilitar aggregate automático que causa problemas
+tasks.named('test').configure {
+    finalizedBy()
+}
+
+serenity {
+    reports = ["single-page-html", "json"]
+    outputDirectory = file("${project.buildDir}/site/serenity")
+}
+
+// Configurar aggregate para suprimir COMPLETAMENTE el error de requirements
+tasks.named('aggregate').configure {
+    // Redirigir logs para evitar stack trace visible
+    logging.captureStandardError LogLevel.QUIET
+    logging.captureStandardOutput LogLevel.QUIET
+
+    doFirst {
+        // Crear directorio de reportes si no existe
+        file("${project.buildDir}/site/serenity").mkdirs()
+
+        // Deshabilitar requirements completamente
+        System.setProperty("serenity.requirements.enabled", "false")
+        System.setProperty("serenity.use.requirements.directories", "false")
+    }
+
+    doLast {
+        // Verificar si el reporte se generó exitosamente
+        def indexFile = file("${project.buildDir}/site/serenity/index.html")
+        if (indexFile.exists()) {
+            println "\n==================================================="
+            println "✓ Reportes Serenity generados exitosamente"
+            println "==================================================="
+            println "📊 Reporte principal: file:///${project.buildDir}/site/serenity/index.html"
+            println "===================================================\n"
+        }
+    }
+}
+
+// Tarea manual para generar reportes cuando sea necesario
+tasks.register('generateReports') {
+    dependsOn test
+    doLast {
+        println "Para generar reportes Serenity, ejecuta: gradlew aggregate"
+    }
+}
+
