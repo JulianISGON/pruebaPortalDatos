@@ -82,8 +82,8 @@ Antes de ejecutar el proyecto, asegúrate de tener instalado:
 ### 1️⃣ Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/retoAutomatizacion.git
-cd retoAutomatizacion
+git clone https://github.com/tu-usuario/pruebaPortalDatos.git
+cd pruebaPortalDatos
 ```
 
 ### 2️⃣ Verificar configuración de Java
@@ -113,7 +113,7 @@ java -version
 ## 📁 Estructura del Proyecto
 
 ```
-retoAutomatizacion/
+pruebaPortalDatos/
 ├── src/
 │   └── test/
 │       ├── java/
@@ -159,7 +159,7 @@ serenity {
 
 Los archivos CSV se descargan en:
 ```
-C:\Users\julia\OneDrive\Desktop\julian\Repositorios\retoAutomatizacion\downloadsCSV
+C:\Users\julia\OneDrive\Desktop\julian\Repositorios\pruebaPortalDatos\downloadsCSV
 ```
 
 Este directorio se crea automáticamente. Los archivos descargados se eliminan después de validarse.
